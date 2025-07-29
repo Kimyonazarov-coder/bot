@@ -1,5 +1,9 @@
+const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 const sqlite3 = require("sqlite3").verbose();
+
+const app = express();
+const port = process.env.PORT || 3000;
 
 const bot = new TelegramBot("7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM", {
   polling: true,
@@ -7,6 +11,12 @@ const bot = new TelegramBot("7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM", {
 
 const db = new sqlite3.Database("maktab.db");
 const users = {};
+
+app.use(express.json());
+app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
@@ -185,4 +195,8 @@ bot.on("message", async (msg) => {
 
     delete users[chatId];
   }
+});
+
+app.listen(port, () => {
+  console.log(`Bot listening on port ${port}`);
 });
