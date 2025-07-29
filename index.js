@@ -3,11 +3,10 @@ const TelegramBot = require("node-telegram-bot-api");
 const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
-const port = 'https://bot-gfxm.onrender.com' || 3000;
+const port = process.env.PORT || 3000; // <-- TO‘G‘RI
 
-const bot = new TelegramBot("7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM", {
-  polling: true,
-});
+const bot = new TelegramBot("7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM");
+bot.setWebHook(`https://bot-gfxm.onrender.com/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`); // Webhook URL
 
 const db = new sqlite3.Database("maktab.db");
 const users = {};
@@ -17,6 +16,8 @@ app.post(`/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
+
+
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
