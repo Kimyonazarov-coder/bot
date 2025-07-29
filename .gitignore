@@ -1,0 +1,16 @@
+# Logs
+*.log
+
+# Node modules
+node_modules/
+
+# SQLite ma'lumotlar bazasi
+*.db
+
+# OS va editorlar uchun
+.DS_Store
+.vscode/
+
+# Build fayllar
+build/
+dist/
