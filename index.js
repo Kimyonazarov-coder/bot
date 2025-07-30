@@ -18,7 +18,6 @@ app.post(`/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`, (req, res) => {
 });
 
 
-
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   users[chatId] = { step: "password" };
@@ -204,4 +203,59 @@ setInterval(() => {
 
 app.listen(port, () => {
   console.log(`Bot listening on port ${port}`);
+});
+
+
+app.get("/", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kimyonazarov's Bot || school register</title>
+    <style>
+      body {
+        background-color: #000;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+          sans-serif;
+        text-align: center;
+        width: 100vw;
+        overflow: hidden;
+        text-transform: capitalize;
+      }
+      h1 {
+        font-weight: 900;
+        background: #252525;
+        background: linear-gradient(
+          to right,
+          #ff0000,
+          #252525 30%,
+          #bbff00 30%,
+          #4000ff 70%,
+          #02ff49 70%,
+          #252525 100%
+        );
+        background-clip: text;
+        color: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Kimyonazarov's Bot || school register</h1>
+    <p>
+      Maktabda davomatni aniq, qulay va raqamli tarzda yuritish uchun
+      mo‘ljallangan Telegram bot. <br> PR: @m_kimyonazarov
+    </p>
+  </body>
+</html>
+
+  `);
 });
