@@ -3,10 +3,10 @@ const TelegramBot = require("node-telegram-bot-api");
 const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
-const port = process.env.PORT || 3000; // <-- TO‘G‘RI
+const port = process.env.PORT || 3000; 
 
 const bot = new TelegramBot("7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM");
-bot.setWebHook(`https://bot-gfxm.onrender.com/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`); // Webhook URL
+bot.setWebHook(`https://bot-gfxm.onrender.com/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`); 
 
 const db = new sqlite3.Database("maktab.db");
 const users = {};
@@ -197,6 +197,10 @@ bot.on("message", async (msg) => {
     delete users[chatId];
   }
 });
+
+setInterval(() => {
+  fetch("https://bot-gfxm.onrender.com"); 
+}, 1 * 60 * 1000); 
 
 app.listen(port, () => {
   console.log(`Bot listening on port ${port}`);
