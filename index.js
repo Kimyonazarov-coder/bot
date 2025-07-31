@@ -11,7 +11,7 @@ const botToken = process.env.BOT_TOKEN;
 const port = process.env.PORT || 3000;
 
 const bot = new TelegramBot(botToken, { polling: false });
-bot.setWebHook(`https://bot-gfxm.onrender.com/bot${botToken}`);
+bot.setWebHook(`https://bot-2g3q.onrender.com/bot${botToken}`);
 
 const db = new sqlite3.Database("maktab.db");
 const users = {};
@@ -183,7 +183,7 @@ bot.on("message", async (msg) => {
 });
 
 setInterval(() => {
-  fetch("https://bot-gfxm.onrender.com");
+  fetch("https://bot-2g3q.onrender.com");
 }, 60 * 1000);
 
 app.get("/", (req, res) => {
