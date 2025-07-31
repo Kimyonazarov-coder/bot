@@ -10,7 +10,6 @@ const app = express();
 const botToken = process.env.BOT_TOKEN;
 const port = process.env.PORT || 3000;
 
-// Bot yaratish (polling emas, webhook orqali)
 const bot = new TelegramBot(botToken, { polling: false });
 bot.setWebHook(`https://bot-gfxm.onrender.com/bot${botToken}`);
 
@@ -19,13 +18,11 @@ const users = {};
 
 app.use(express.json());
 
-// Webhook endpoint (tokenni yashirin qildik)
 app.post(`/bot${botToken}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
-// /start komandasi
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   users[chatId] = { step: "password" };
@@ -64,12 +61,18 @@ Siz sinfingiz o'quvchilari uchun mo'ljallangan rasmiy Telegram botdasiz. Bu bot 
   }, 100);
 });
 
-// Ma'lumotlar bosqichlari
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text?.trim();
 
   if (!users[chatId] || text.startsWith("/")) return;
+
+  if (/https?:\/\/|\.com|\.net|free eth/i.test(text)) {
+    bot.sendMessage(chatId, "⚠️ Linklar yuborish taqiqlangan.");
+    return;
+  }
+
+
   const state = users[chatId];
 
   if (state.step === "password") {
@@ -179,12 +182,10 @@ bot.on("message", async (msg) => {
   }
 });
 
-// Render server ishlashi uchun ping
 setInterval(() => {
   fetch("https://bot-gfxm.onrender.com");
 }, 60 * 1000);
 
-// Frontend uchun test sahifa
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -198,7 +199,6 @@ app.get("/", (req, res) => {
   `);
 });
 
-// Portni tinglash
 app.listen(port, () => {
   console.log(`Bot running on port ${port}`);
 });
