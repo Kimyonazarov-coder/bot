@@ -3,6 +3,7 @@
 
 # Node modules
 node_modules/
+.env
 
 # SQLite ma'lumotlar bazasi
 *.db

@@ -1,30 +1,37 @@
 const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 const sqlite3 = require("sqlite3").verbose();
+const dotenv = require("dotenv");
+const fetch = require("node-fetch");
+
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000; 
+const botToken = process.env.BOT_TOKEN;
+const port = process.env.PORT || 3000;
 
-const bot = new TelegramBot("7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM");
-bot.setWebHook(`https://bot-gfxm.onrender.com/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`); 
+// Bot yaratish (polling emas, webhook orqali)
+const bot = new TelegramBot(botToken, { polling: false });
+bot.setWebHook(`https://bot-gfxm.onrender.com/bot${botToken}`);
 
 const db = new sqlite3.Database("maktab.db");
 const users = {};
 
 app.use(express.json());
-app.post(`/bot7420419525:AAEzdYv-r2sv2XNFyfZtbGRDAUYJkeqxyDM`, (req, res) => {
+
+// Webhook endpoint (tokenni yashirin qildik)
+app.post(`/bot${botToken}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
-
+// /start komandasi
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   users[chatId] = { step: "password" };
-  bot.sendMessage(
-    chatId,
-    `
-    👋 Assalomu alaykum, hurmatli O'quvchi va O'qituvchilar!
+
+  bot.sendMessage(chatId, `
+👋 Assalomu alaykum, hurmatli O'quvchi va O'qituvchilar!
 
 Siz sinfingiz o'quvchilari uchun mo'ljallangan rasmiy Telegram botdasiz. Bu bot orqali siz quyidagi ishlarni qilishingiz mumkin:
 
@@ -44,24 +51,20 @@ Siz sinfingiz o'quvchilari uchun mo'ljallangan rasmiy Telegram botdasiz. Bu bot 
 
 📣 Botdan foydalanishni boshlash uchun:
 1. Parolingizni <a href="https://t.me/m_kimyonazarov">Muhammadxojadan</a> sorang.
-2. Shunchaki parolni yozib yuboring deb malumotlaringizni ayting - va sizga parolni beradi.
-3. So'ng, o'zgartirmoqchi bo'lsangiz - bosqichma-bosqich to'ldirasiz.
+2. So'ng, parolni yuboring.
+3. Keyin bosqichma-bosqich ma'lumotlaringizni to‘ldirasiz.
 
 ‼️ Diqqat: bu bot sinf uchun maxsus tayyorlangan. Do'stlar, tanishlar yoki boshqa odamlar foydalanmasligi kerak.
 
-
 📚 Sizning axborotlaringiz sinf tizimiga tushadi va ma'muriyat tomonidan ko'rib chiqiladi.
-    `,
-  {parse_mode: 'HTML'}
-  ),
-  setTimeout(() => (
-    bot.sendMessage(
-      chatId,
-      "Iltimos Parolni Kiriting: "
-    )
-  ), 100)
+`, { parse_mode: 'HTML' });
+
+  setTimeout(() => {
+    bot.sendMessage(chatId, "Iltimos Parolni Kiriting:");
+  }, 100);
 });
 
+// Ma'lumotlar bosqichlari
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text?.trim();
@@ -70,21 +73,18 @@ bot.on("message", async (msg) => {
   const state = users[chatId];
 
   if (state.step === "password") {
-    db.get(
-      `SELECT * FROM peoples WHERE password = ?`,
-      [text],
-      (err, row) => {
-        if (err || !row) {
-          bot.sendMessage(chatId, "❌ Parol noto'g'ri yoki xatolik yuz berdi.");
-          return;
-        }
+    db.get(`SELECT * FROM peoples WHERE password = ?`, [text], (err, row) => {
+      if (err || !row) {
+        bot.sendMessage(chatId, "❌ Parol noto'g'ri yoki xatolik yuz berdi.");
+        return;
+      }
 
-        users[chatId] = {
-          step: "confirm_update",
-          data: { password: text, row },
-        };
+      users[chatId] = {
+        step: "confirm_update",
+        data: { password: text, row },
+      };
 
-        const info = `
+      const info = `
 📋 Sizning ma'lumotlaringiz:
 🔹 Ism: ${row.first_name || "—"}
 🔹 Familiya: ${row.last_name || "—"}
@@ -93,17 +93,17 @@ bot.on("message", async (msg) => {
 🔹 Tug'ilgan sana: ${row.brthay || "—"}
 🔹 Telegram: ${row.telegram || "—"}
 🔹 Instagram: ${row.instagram || "—"}
-🔹 Telefon: ${row.tel_number || "—"}`.trim();
+🔹 Telefon: ${row.tel_number || "—"}
+`.trim();
 
-        bot.sendMessage(chatId, info + "\n\n🛠 Ma'lumotlarni o'zgartirasizmi?", {
-          reply_markup: {
-            keyboard: [["Ha", "Yo'q"]],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        });
-      }
-    );
+      bot.sendMessage(chatId, info + "\n\n🛠 Ma'lumotlarni o'zgartirasizmi?", {
+        reply_markup: {
+          keyboard: [["Ha", "Yo'q"]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      });
+    });
   } else if (state.step === "confirm_update") {
     if (text === "Ha") {
       state.step = "first_name";
@@ -133,7 +133,7 @@ bot.on("message", async (msg) => {
       bot.sendMessage(chatId, "❌ Noto'g'ri format. YYYY-MM-DD tarzida yozing.");
       return;
     }
-    state.data.brthay = text === "Yo'q" ? null : text;
+    state.data.brthay = text;
     state.step = "telegram";
     bot.sendMessage(chatId, `Telegram username kiriting (@ bilan):`);
   } else if (state.step === "telegram") {
@@ -148,19 +148,12 @@ bot.on("message", async (msg) => {
     state.data.tel_number = text === "Yo'q" ? null : text;
 
     const {
-      first_name,
-      last_name,
-      father_name,
-      sex,
-      brthay,
-      telegram,
-      instagram,
-      tel_number,
-      password,
+      first_name, last_name, father_name,
+      sex, brthay, telegram, instagram, tel_number, password
     } = state.data;
 
-    db.run(
-      `UPDATE peoples SET 
+    db.run(`
+      UPDATE peoples SET 
         first_name = ?, 
         last_name = ?, 
         father_name = ?, 
@@ -168,94 +161,44 @@ bot.on("message", async (msg) => {
         brthay = ?, 
         telegram = ?, 
         instagram = ?, 
-        tel_number = ? 
+        tel_number = ?
       WHERE password = ?`,
-      [
-        first_name,
-        last_name,
-        father_name,
-        sex,
-        brthay,
-        telegram,
-        instagram,
-        tel_number,
-        password,
-      ],
+      [first_name, last_name, father_name, sex, brthay, telegram, instagram, tel_number, password],
       function (err) {
         if (err) {
           console.error(err);
-          bot.sendMessage(chatId, "❌ Xatolik yuz berdi. Keyinroq urinib ko'ring.");
+          bot.sendMessage(chatId, "❌ Xatolik yuz berdi.");
         } else if (this.changes > 0) {
-          bot.sendMessage(chatId, "✅ Ma'lumotlaringiz yangilandi.");
+          bot.sendMessage(chatId, "✅ Ma'lumotlaringiz muvaffaqiyatli yangilandi.");
         } else {
           bot.sendMessage(chatId, "⚠️ Ma'lumotlar topilmadi yoki o'zgarmadi.");
         }
+        delete users[chatId];
       }
     );
-
-    delete users[chatId];
   }
 });
 
+// Render server ishlashi uchun ping
 setInterval(() => {
-  fetch("https://bot-gfxm.onrender.com"); 
-}, 1 * 60 * 1000); 
+  fetch("https://bot-gfxm.onrender.com");
+}, 60 * 1000);
 
-app.listen(port, () => {
-  console.log(`Bot listening on port ${port}`);
-});
-
-
+// Frontend uchun test sahifa
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kimyonazarov's Bot || school register</title>
-    <style>
-      body {
-        background-color: #000;
-        color: #fff;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
-          sans-serif;
-        text-align: center;
-        width: 100vw;
-        overflow: hidden;
-        text-transform: capitalize;
-      }
-      h1 {
-        font-weight: 900;
-        background: #252525;
-        background: linear-gradient(
-          to right,
-          #ff0000,
-          #252525 30%,
-          #bbff00 30%,
-          #4000ff 70%,
-          #02ff49 70%,
-          #252525 100%
-        );
-        background-clip: text;
-        color: transparent;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Kimyonazarov's Bot || school register</h1>
-    <p>
-      Maktabda davomatni aniq, qulay va raqamli tarzda yuritish uchun
-      mo‘ljallangan Telegram bot. <br> PR: @m_kimyonazarov
-    </p>
-  </body>
-</html>
-
+    <html>
+    <head><title>Kimyonazarov's Bot</title></head>
+    <body style="background:black;color:white;text-align:center;padding:50px">
+      <h1>Kimyonazarov's School Bot</h1>
+      <p>Maktab uchun tayyorlangan Telegram bot. <br> PR: @m_kimyonazarov</p>
+    </body>
+    </html>
   `);
+});
+
+// Portni tinglash
+app.listen(port, () => {
+  console.log(`Bot running on port ${port}`);
 });
