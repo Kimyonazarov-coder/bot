@@ -61,6 +61,36 @@ Siz sinfingiz o'quvchilari uchun mo'ljallangan rasmiy Telegram botdasiz. Bu bot 
   }, 100);
 });
 
+bot.onText(/\/find (.+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const input = match[1].trim();
+  const [first_name, last_name] = input.split(" ");
+
+  if (!first_name || !last_name) {
+    bot.sendMessage(chatId, "❗️ Iltimos, to‘liq ism va familiyangizni kiriting.\n\nMisol: `/find Ali Valiyev`", {
+      parse_mode: "Markdown",
+    });
+    return;
+  }
+
+  db.get(
+    `SELECT password FROM peoples WHERE first_name = ? AND last_name = ?`,
+    [first_name, last_name],
+    (err, row) => {
+      if (err) {
+        console.error(err);
+        bot.sendMessage(chatId, "❌ Xatolik yuz berdi. Qaytadan urinib ko‘ring.");
+      } else if (!row) {
+        bot.sendMessage(chatId, "⚠️ Ushbu ism va familiya bo‘yicha hech qanday parol topilmadi.");
+      } else {
+        bot.sendMessage(chatId, `🔐 Sizning parolingiz: *${row.password}*`, {
+          parse_mode: "Markdown",
+        });
+      }
+    }
+  );
+});
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text?.trim();
@@ -206,14 +236,39 @@ setInterval(() => {
 // 🌐 Web sahifa uchun
 app.get("/", (req, res) => {
   res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head><title>Kimyonazarov's Bot</title></head>
-    <body style="background:black;color:white;text-align:center;padding:50px">
-      <h1>Kimyonazarov's School Bot</h1>
-      <p>Maktab uchun tayyorlangan Telegram bot. <br> PR: @m_kimyonazarov</p>
-    </body>
-    </html>
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kimyonazarov's Bot</title>
+  <!-- ✅ Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white min-h-screen flex flex-col items-center justify-center px-4">
+
+  <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-6 text-center">
+    Kimyonazarov's School Bot
+  </h1>
+
+  <p class="text-lg md:text-xl text-gray-300 mb-8 text-center max-w-2xl leading-relaxed">
+    Bu Telegram bot maktab o'quvchilari uchun maxsus ishlab chiqilgan.<br>
+    O'quvchilar o'z ma'lumotlarini kiritish orqali sinf tizimida ro'yxatdan o'tishadi.<br>
+    Ma'lumotlar xavfsiz saqlanadi.
+  </p>
+
+  <a href="https://t.me/m_kimyonazarov" target="_blank"
+     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 ease-in-out shadow-md">
+    📲 Admin bilan bog'lanish
+  </a>
+
+  <footer class="mt-10 text-sm text-gray-500 absolute bottom-4 text-center">
+    &copy; 2025 Kimyonazarov. Barcha huquqlar himoyalangan.
+  </footer>
+
+</body>
+</html>
+
   `);
 });
 
